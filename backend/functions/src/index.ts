@@ -2,19 +2,13 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import express from "express";
 import cors from "cors";
-import { google } from "googleapis";
+
+const gemini = require("./adaptors/gemini");
 
 admin.initializeApp();
-const db = admin.firestore();
 
 const app = express();
 app.use(cors({ origin: true }));
-
-const oauth2Client = new google.auth.OAuth2(
-  functions.config().gemini.client_id,
-  functions.config().gemini.client_secret,
-  `https://us-central1-thoughtless-v2.cloudfunctions.net/api/oauth/callback`
-);
 
 const authenticate = async (req: any, res: any, next: any) => {
   if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
@@ -32,18 +26,13 @@ const authenticate = async (req: any, res: any, next: any) => {
 };
 
 app.get("/oauth/config", (req, res) => {
-  res.json({
-    client_id: functions.config().gemini.client_id,
-    redirect_uri: `https://us-central1-thoughtless-v2.cloudfunctions.net/api/oauth/callback`,
-    scope: "https://www.googleapis.com/auth/generative-language.retriever",
-  });
+  res.json(gemini.getOAuthConfig());
 });
 
-app.get("/oauth/callback", async (req: any, res) => {
+app.get("/oauth/callback", authenticate, async (req: any, res) => {
   const { code } = req.query;
   try {
-    const { tokens } = await oauth2Client.getToken(code as string);
-    await db.collection("users").doc(req.user.uid).set({ tokens });
+    await gemini.exchangeCodeForToken(code as string, req.user.uid);
     res.send("<script>window.close();</script>");
   } catch (error: any) {
     console.error("Error exchanging code for token:", error);
@@ -53,22 +42,21 @@ app.get("/oauth/callback", async (req: any, res) => {
 
 app.get("/oauth/status", authenticate, async (req: any, res) => {
   try {
-    const doc = await db.collection("users").doc(req.user.uid).get();
-    if (doc.exists) {
-      const { tokens } = doc.data() as any;
-      oauth2Client.setCredentials(tokens);
-      const { token } = await oauth2Client.getAccessToken();
-      if (token) {
-        res.json({ connected: true });
-      } else {
-        res.json({ connected: false });
-      }
-    } else {
-      res.json({ connected: false });
-    }
+    const connected = await gemini.hasValidToken(req.user.uid);
+    res.json({ connected });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
+});
+
+app.post("/chatbots/message", authenticate, async (req: any, res) => {
+    const { model, message } = req.body;
+    try {
+        const response = await gemini.sendMessage(req.user.uid, model, message);
+        res.json(response);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 export const api = functions.https.onRequest(app);

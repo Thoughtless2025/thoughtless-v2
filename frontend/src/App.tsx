@@ -1,65 +1,107 @@
-import { useState, useEffect } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+import { useState, useEffect } from 'react';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from './firebase';
+import './App.css';
+
+const API_URL = 'https://us-central1-thoughtless-v2.cloudfunctions.net/api';
 
 function App() {
-  const [status, setStatus] = useState('Loading...');
-  const [connected, setConnected] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [message, setMessage] = useState('');
+  const [response, setResponse] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/oauth/status`);
-        const data = await response.json();
-        if (data.connected) {
-          setStatus('Connected');
-          setConnected(true);
-        } else {
-          setStatus('Disconnected');
-          setConnected(false);
-        }
-      } catch (error) {
-        setStatus('Error');
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        checkConnectionStatus(currentUser);
       }
-    };
-    checkStatus();
+    });
+    return () => unsubscribe();
   }, []);
 
-  const connectGemini = async () => {
+  const checkConnectionStatus = async (currentUser: User) => {
+    const token = await currentUser.getIdToken();
+    const res = await fetch(`${API_URL}/oauth/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    setIsConnected(data.connected);
+  };
+
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
     try {
-      const response = await fetch(`${API_BASE}/oauth/config`);
-      const config = await response.json();
-      const params = new URLSearchParams({
-        client_id: config.client_id,
-        redirect_uri: config.redirect_uri,
-        response_type: 'code',
-        scope: config.scope,
-        access_type: 'offline',
-        prompt: 'consent',
-      });
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-      window.open(authUrl, 'oauth', 'width=500,height=600');
+      await signInWithPopup(auth, provider);
     } catch (error) {
-      setStatus('Error');
+      console.error('Error signing in:', error);
     }
   };
 
+  const handleConnect = async () => {
+    if (!user) return;
+    const token = await user.getIdToken();
+    const res = await fetch(`${API_URL}/oauth/config`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    const config = await res.json();
+
+    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${config.client_id}&redirect_uri=${config.redirect_uri}&response_type=code&scope=${config.scope}&access_type=offline&prompt=consent`;
+
+    const oauthWindow = window.open(oauthUrl, '_blank', 'width=500,height=600');
+
+    const checkWindow = setInterval(() => {
+        if (oauthWindow && oauthWindow.closed) {
+            clearInterval(checkWindow);
+            checkConnectionStatus(user);
+        }
+    }, 1000);
+
+  };
+
+  const handleSendMessage = async () => {
+    if (!user || !message) return;
+    const token = await user.getIdToken();
+    const res = await fetch(`${API_URL}/chatbots/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ model: 'gemini-pro', message }),
+    });
+    const data = await res.json();
+    setResponse(JSON.stringify(data, null, 2));
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center">
-      <h1 className="text-4xl font-bold mb-4">Thoughtless v2</h1>
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <div className="flex items-center mb-4">
-          <div className={`w-4 h-4 rounded-full mr-2 ${connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-          <p className="text-lg">{status}</p>
-        </div>
-        <button
-          onClick={connectGemini}
-          disabled={connected}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
-        >
-          Connect to Gemini
-        </button>
-      </div>
+    <div className="App">
+      <header className="App-header">
+        {user ? (
+          <div>
+            <p>Welcome, {user.displayName}</p>
+            {!isConnected ? (
+                <button onClick={handleConnect}>Connect to Gemini</button>
+            ) : (
+                <p>Connected to Gemini</p>
+            )}
+            <div>
+              <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Enter your message"
+              />
+              <button onClick={handleSendMessage} disabled={!isConnected}>Send Message</button>
+            </div>
+            {response && <pre>{response}</pre>}
+          </div>
+        ) : (
+          <button onClick={handleLogin}>Login with Google</button>
+        )}
+      </header>
     </div>
   );
 }
