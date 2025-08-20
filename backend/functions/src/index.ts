@@ -30,6 +30,9 @@ app.get("/oauth/config", (req, res) => {
 });
 
 app.get("/oauth/callback", authenticate, async (req: any, res) => {
+  console.log("OAuth callback received");
+  console.log("Request path:", req.path);
+  console.log("Request query:", req.query);
   const { code } = req.query;
   try {
     await gemini.exchangeCodeForToken(code as string, req.user.uid);
