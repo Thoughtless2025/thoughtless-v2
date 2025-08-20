@@ -11,18 +11,20 @@ interface IOAuthConfig {
 }
 
 export const getOAuthConfig = (): IOAuthConfig => {
+    const apiBaseUrl = process.env.API_BASE_URL || 'https://us-central1-thoughtless-v2.cloudfunctions.net';
     return {
         client_id: process.env.GEMINI_CLIENT_ID,
-        redirect_uri: `https://us-central1-thoughtless-v2.cloudfunctions.net/api/oauth/callback`,
+        redirect_uri: `${apiBaseUrl}/api/oauth/callback`,
         scope: "https://www.googleapis.com/auth/generative-language.retriever",
     };
 };
 
 const getOauth2Client = (uid: string): OAuth2Client => {
+    const apiBaseUrl = process.env.API_BASE_URL || 'https://us-central1-thoughtless-v2.cloudfunctions.net';
     const oauth2Client = new OAuth2Client(
         process.env.GEMINI_CLIENT_ID,
         process.env.GEMINI_CLIENT_SECRET,
-        `https://us-central1-thoughtless-v2.cloudfunctions.net/api/oauth/callback`
+        `${apiBaseUrl}/api/oauth/callback`
     );
 
     oauth2Client.on('tokens', (tokens: Credentials) => {

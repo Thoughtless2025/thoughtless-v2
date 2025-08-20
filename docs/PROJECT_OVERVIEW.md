@@ -1,12 +1,5 @@
-# Thoughtless v2 - Project Status
+# Project Overview
 
-## User Preferences
-- **Voice Input:** Primary input method when available
-- **Concise Output:** ~6 lines max for web interfaces due to screen zoom
-- **Command Execution:** Use "run command" button, no direct terminal access
-- **File Operations:** Provide complete file replacements, not partial edits
-
-## Project Overview
 **Thoughtless v2** enables users of multiple AI chatbots to contribute conversations to a central Firestore database for public display. Core purpose: demonstrate AI is for meaningful dialogue, not information search.
 
 **User Roles:** Public (view), Supporters (view+comment), Contributors (create+contribute), Admin (manage users)
@@ -36,15 +29,3 @@ frontend/
 ├── package.json
 └── vite.config.ts
 ```
-
-## Immediate Next Steps
-1. **Deploy frontend:** Deploy the frontend to a public URL.
-
-## Development Status
-- ✅ **Infrastructure:** New Firebase project created and configured.
-- ✅ **Backend:** Basic backend structure created and deployed.
-- ✅ **Frontend:** Basic frontend structure created and deployed.
-- ✅ **Authentication:** User authentication implemented and tested.
-- ✅ **OAuth2:** OAuth2 flow completed.
-
-Last Updated: 2025-08-20

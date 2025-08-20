@@ -3,7 +3,7 @@ import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, type User } fr
 import { auth } from './firebase';
 import './App.css';
 
-const API_URL = 'https://us-central1-thoughtless-v2.cloudfunctions.net/api';
+const API_URL = '/api';
 
 function App() {
   console.log("App component is rendering");
