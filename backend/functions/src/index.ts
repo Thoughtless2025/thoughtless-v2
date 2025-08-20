@@ -68,4 +68,7 @@ app.post("/chatbots/message", authenticate, async (req: any, res) => {
     }
 });
 
-export const api = functions.https.onRequest(app);
+const main = express();
+main.use('/api', app);
+
+export const api = functions.https.onRequest(main);
