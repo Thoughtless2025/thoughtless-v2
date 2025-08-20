@@ -3,13 +3,13 @@ import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBKMlvdvDD3ny22ILHSmap2utFz5ORk6Sw",
-  authDomain: "thoughtless-v2.firebaseapp.com",
-  projectId: "thoughtless-v2",
-  storageBucket: "thoughtless-v2.appspot.com",
-  messagingSenderId: "549296244347",
-  appId: "1:549296244347:web:fdc21f5202baf98f78c4de",
-  measurementId: "G-M0KHH5Z6YY"
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID,
+  measurementId: import.meta.env.VITE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);
