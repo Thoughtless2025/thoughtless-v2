@@ -152,7 +152,7 @@ function App() {
         )}
       </div>
       <footer className="text-center text-gray-500 text-sm mt-4">
-        <p>v0.1.0</p>
+        <p>v0.1.1</p>
       </footer>
     </div>
   );

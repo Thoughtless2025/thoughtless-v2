@@ -1,3 +1,5 @@
+console.log("Initializing Thoughtless v2 API");
+
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import express from "express";
