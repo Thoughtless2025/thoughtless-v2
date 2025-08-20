@@ -9,7 +9,6 @@ import * as claude from "../adaptors/claude";
 admin.initializeApp();
 
 const app = express();
-app.use(cors({ origin: true }));
 
 const authenticate = async (req: any, res: any, next: any) => {
   if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
@@ -69,6 +68,7 @@ app.post("/chatbots/message", authenticate, async (req: any, res) => {
 });
 
 const main = express();
+main.use(cors({ origin: true }));
 main.use('/api', app);
 
 export const api = functions.https.onRequest(main);
