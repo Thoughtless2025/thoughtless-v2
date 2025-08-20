@@ -38,15 +38,13 @@ frontend/
 ```
 
 ## Immediate Next Steps
-1. **Complete OAuth2 Flow:** Implement the full OAuth2 flow for Gemini.
-2. **Add Claude Adapter:** Create adaptors/claude.js  
-3. **Frontend Integration:** Connect components to web/mobile apps
+1. **Deploy frontend:** Deploy the frontend to a public URL.
 
 ## Development Status
 - ✅ **Infrastructure:** New Firebase project created and configured.
 - ✅ **Backend:** Basic backend structure created and deployed.
 - ✅ **Frontend:** Basic frontend structure created and deployed.
-- ⏳ **Authentication:** User authentication implemented, but not fully tested.
-- ⏳ **OAuth2:** OAuth2 flow in progress.
+- ✅ **Authentication:** User authentication implemented and tested.
+- ✅ **OAuth2:** OAuth2 flow completed.
 
-Last Updated: 2025-08-18
+Last Updated: 2025-08-20
