@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './firebase';
@@ -7,10 +6,15 @@ import './App.css';
 const API_URL = 'https://us-central1-thoughtless-v2.cloudfunctions.net/api';
 
 function App() {
+  console.log("App component is rendering");
   const [user, setUser] = useState<User | null>(null);
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [provider, setProvider] = useState('gemini');
+  const [model, setModel] = useState('gemini-pro');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -37,6 +41,7 @@ function App() {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error('Error signing in:', error);
+      setError("Failed to sign in.");
     }
   };
 
@@ -63,45 +68,89 @@ function App() {
 
   const handleSendMessage = async () => {
     if (!user || !message) return;
+    setLoading(true);
+    setError(null);
     const token = await user.getIdToken();
-    const res = await fetch(`${API_URL}/chatbots/message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ model: 'gemini-pro', message }),
-    });
-    const data = await res.json();
-    setResponse(JSON.stringify(data, null, 2));
+    try {
+      const res = await fetch(`${API_URL}/chatbots/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ provider, model, message }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResponse(data);
+      } else {
+        setError(data.error || "An unknown error occurred.");
+      }
+    } catch (err) {
+      setError("Failed to send message.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
+      <div className="w-full max-w-2xl p-8 bg-white rounded-lg shadow-md">
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800">Thoughtless v2</h1>
+          <p className="text-gray-600">A new way to interact with AI</p>
+        </header>
         {user ? (
           <div>
-            <p>Welcome, {user.displayName}</p>
-            {!isConnected ? (
-                <button onClick={handleConnect}>Connect to Gemini</button>
-            ) : (
-                <p>Connected to Gemini</p>
-            )}
-            <div>
-              <input
-                type="text"
+            <div className="flex justify-between items-center mb-6">
+              <p className="text-lg">Welcome, {user.displayName}</p>
+              {!isConnected ? (
+                  <button onClick={handleConnect} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">Connect to Gemini</button>
+              ) : (
+                  <p className="text-green-500 font-semibold">Connected to Gemini</p>
+              )}
+            </div>
+            <div className="space-y-4">
+              <div className="flex space-x-4">
+                <select value={provider} onChange={(e) => setProvider(e.target.value)} className="w-full p-2 border rounded">
+                  <option value="gemini">Gemini</option>
+                  <option value="claude">Claude</option>
+                </select>
+                <select value={model} onChange={(e) => setModel(e.target.value)} className="w-full p-2 border rounded">
+                  {provider === 'gemini' ? (
+                    <>
+                      <option value="gemini-pro">Gemini Pro</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="claude-2">Claude 2</option>
+                      <option value="claude-instant-1">Claude Instant 1</option>
+                    </>
+                  )}
+                </select>
+              </div>
+              <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Enter your message"
+                className="w-full p-2 border rounded h-32"
               />
-              <button onClick={handleSendMessage} disabled={!isConnected}>Send Message</button>
+              <button onClick={handleSendMessage} disabled={!isConnected || loading} className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors disabled:bg-gray-400">
+                {loading ? 'Sending...' : 'Send Message'}
+              </button>
             </div>
-            {response && <pre>{response}</pre>}
+            {error && <p className="text-red-500 mt-4">{error}</p>}
+            {response && (
+              <div className="mt-6 p-4 bg-gray-50 rounded">
+                <h3 className="font-semibold text-lg mb-2">Response:</h3>
+                <pre className="whitespace-pre-wrap">{JSON.stringify(response, null, 2)}</pre>
+              </div>
+            )}
           </div>
         ) : (
-          <button onClick={handleLogin}>Login with Google</button>
+          <button onClick={handleLogin} className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">Login with Google</button>
         )}
-      </header>
+      </div>
     </div>
   );
 }

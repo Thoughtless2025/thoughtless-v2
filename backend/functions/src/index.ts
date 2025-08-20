@@ -3,7 +3,8 @@ import * as admin from "firebase-admin";
 import express from "express";
 import cors from "cors";
 
-const gemini = require("./adaptors/gemini");
+import * as gemini from "../adaptors/gemini";
+import * as claude from "../adaptors/claude";
 
 admin.initializeApp();
 
@@ -50,9 +51,17 @@ app.get("/oauth/status", authenticate, async (req: any, res) => {
 });
 
 app.post("/chatbots/message", authenticate, async (req: any, res) => {
-    const { model, message } = req.body;
+    const { provider, model, message } = req.body;
     try {
-        const response = await gemini.sendMessage(req.user.uid, model, message);
+        let response;
+        if (provider === 'gemini') {
+            response = await gemini.sendMessage(req.user.uid, model, message);
+        } else if (provider === 'claude') {
+            response = await claude.sendMessage(req.user.uid, model, message);
+        } else {
+            res.status(400).json({ error: 'Unsupported provider' });
+            return;
+        }
         res.json(response);
     } catch (error: any) {
         res.status(500).json({ error: error.message });

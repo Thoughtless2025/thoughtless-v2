@@ -1,0 +1,13 @@
+
+# Firebase
+.firebase
+.firebaserc
+
+# Environment variables
+.env*
+
+# Dependencies
+node_modules
+
+# Build files
+lib
