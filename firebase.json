@@ -12,7 +12,19 @@
     ],
     "rewrites": [
       {
-        "source": "/api/**",
+        "source": "/api/oauth/status",
+        "function": "api"
+      },
+      {
+        "source": "/api/oauth/config",
+        "function": "api"
+      },
+      {
+        "source": "/api/oauth/callback",
+        "function": "api"
+      },
+      {
+        "source": "/api/chatbots/message",
         "function": "api"
       },
       {

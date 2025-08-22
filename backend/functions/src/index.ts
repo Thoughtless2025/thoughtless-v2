@@ -72,8 +72,11 @@ app.post("/chatbots/message", authenticate, async (req: any, res) => {
     }
 });
 
-const main = express();
-main.use(cors({ origin: true }));
-main.use('/api', app);
+app.get("/hello", (req, res) => {
+  console.log("GET /hello received");
+  res.send("Hello from the backend!");
+});
 
-export const api = functions.https.onRequest(main);
+app.use(cors({ origin: true }));
+
+export const api = functions.https.onRequest(app);

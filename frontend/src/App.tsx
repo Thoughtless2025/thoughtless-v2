@@ -3,7 +3,7 @@ import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, type User } fr
 import { auth } from './firebase';
 import './App.css';
 
-const API_URL = '/api';
+const API_URL = 'https://us-central1-thoughtless-v2.cloudfunctions.net/api';
 
 function App() {
   console.log("App component is rendering");
@@ -15,6 +15,7 @@ function App() {
   const [model, setModel] = useState('gemini-pro');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [helloMessage, setHelloMessage] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -93,6 +94,12 @@ function App() {
     }
   };
 
+  const handleHello = async () => {
+    const res = await fetch(`${API_URL}/hello`);
+    const text = await res.text();
+    setHelloMessage(text);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
       <div className="w-full max-w-2xl p-8 bg-white rounded-lg shadow-md">
@@ -100,6 +107,10 @@ function App() {
           <h1 className="text-4xl font-bold text-gray-800">Thoughtless v2</h1>
           <p className="text-gray-600">A new way to interact with AI</p>
         </header>
+        <div>
+          <button onClick={handleHello}>Say Hello</button>
+          {helloMessage && <p>{helloMessage}</p>}
+        </div>
         {user ? (
           <div>
             <div className="flex justify-between items-center mb-6">
@@ -152,7 +163,7 @@ function App() {
         )}
       </div>
       <footer className="text-center text-gray-500 text-sm mt-4">
-        <p>v0.1.1</p>
+        <p>v0.1.2</p>
       </footer>
     </div>
   );
